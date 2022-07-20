@@ -1,0 +1,29 @@
+{
+	"name": "drift-v1-trading-cli",
+	"version": "0.0.0",
+	"description": "",
+	"bin": {
+		"drift": "./build/cli.js"
+	},
+	"scripts": {
+		"clean": "rm -rf lib",
+		"build-sdk": "pushd . && cd ../sdk && yarn && yarn build && popd",
+		"build": "yarn clean && yarn build-sdk && tsc",
+		"start": "./build/cli.js"
+	},
+	"author": "wphan",
+	"license": "ISC",
+	"dependencies": {
+		"@drift-labs/sdk": "file:../sdk/lib",
+		"@pythnetwork/client": "2.5.1",
+		"@project-serum/anchor": "0.24.2",
+		"@solana/spl-token": "^0.1.8",
+		"@solana/web3.js": "^1.30.2",
+		"@types/node": "^16.7.10",
+		"colors": "^1.4.0",
+		"commander": "8.1.0",
+		"loglevel": "^1.7.1",
+		"promptly": "^3.2.0",
+		"typescript": "4.7.4"
+	}
+}
