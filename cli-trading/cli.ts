@@ -488,7 +488,7 @@ bulkPlaceTest.action(async () => {
     const userBank = clearingHouse.getUserBankBalance(0);
     console.log(`bank balance: ${userBank?.balance.toString()}`);
     console.log(`unsettled pnl: ${clearingHouseUser.getUnsettledPNL(new BN(0)).toString()}`);
-    console.log(`unrealized pnl: ${clearingHouseUser.getUnrealizedPNL(new BN(0)).toString()}`);
+    console.log(`unrealized pnl: ${clearingHouseUser.getUnrealizedPNL().toString()}`);
     console.log(`unrealized funding pnl: ${clearingHouseUser.getUnrealizedFundingPNL(new BN(0)).toString()}`);
 
     // const t0 = await clearingHouse.settleFundingPayment(clearingHouseUser.userAccountPublicKey);
@@ -505,7 +505,7 @@ bulkPlaceTest.action(async () => {
     printOpenPositions(userAcc);
 
 
-    for (let ii = 0; ii < 10; ii += 1) {
+    for (let ii = 0; ii < 3; ii += 1) {
         let userAcc = clearingHouseUser.getUserAccount();
         console.log(`${ii}: User open orders:`);
         printOpenOrders(userAcc);
