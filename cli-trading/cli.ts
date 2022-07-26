@@ -20,7 +20,9 @@ import os from 'os';
 import fs from 'fs';
 import log from 'loglevel';
 import {
-    getAssociatedTokenAddress,
+    Token,
+	TOKEN_PROGRAM_ID,
+	ASSOCIATED_TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import { Connection, Keypair, PublicKey, Transaction } from '@solana/web3.js';
 import {
@@ -62,6 +64,24 @@ function commandWithDefaultOption(commandName: string): Command {
         .option('-k, --keypair <path>', 'Solana wallet')
         .option('-u, --url <url>', 'rpc url e.g. https://api.devnet.solana.com');
 }
+
+function printMarketPrices(m: MarketAccount) {
+    const marketInfo = Markets["devnet"][0];
+    const lastOraclePrice = convertToNumber(m?.amm.lastOraclePrice, MARK_PRICE_PRECISION).toFixed(3);
+    const baseSpread = m?.amm.baseSpread;
+    const longSpread = m?.amm.longSpread;
+    const shortSpread = m?.amm.shortSpread;
+    const bidTwap = convertToNumber(m?.amm.lastBidPriceTwap, MARK_PRICE_PRECISION).toFixed(3);
+    const askTwap = convertToNumber(m?.amm.lastAskPriceTwap, MARK_PRICE_PRECISION).toFixed(3);
+    const oracleTwap = convertToNumber(m?.amm.lastOraclePriceTwap, MARK_PRICE_PRECISION).toFixed(3);
+    const markTwap = convertToNumber(m?.amm.lastMarkPriceTwap, MARK_PRICE_PRECISION).toFixed(3);
+    console.log(`[${marketInfo.symbol}], oracle: ${lastOraclePrice}, baseSpread: ${baseSpread}, longSpread: ${longSpread}, shortSpready: ${shortSpread}`);
+    console.log(` .  twap bid:    ${bidTwap}`);
+    console.log(` .  twap ask:    ${askTwap}`);
+    console.log(` .  twap oracle: ${oracleTwap}`);
+    console.log(` .  twap mark:   ${markTwap}`);
+}
+
 
 export function loadKeypair(keypairPath: string): Keypair {
     if (!keypairPath || keypairPath == '') {
@@ -240,10 +260,16 @@ depositCmd.action(async () => {
         console.log(`[${bank.bankIndex.toNumber()}]: ${bank.symbol}, mint: ${bank.mint.toString()}`);
     }
     console.log(`me: ${provider.wallet.publicKey.toString()}`)
-    let ata = await getAssociatedTokenAddress(
+    // let ata = await getAssociatedTokenAddress(
+    //     DevnetBanks[0].mint, // mint
+    //     provider.wallet.publicKey,// owner
+    // );
+	const ata = await Token.getAssociatedTokenAddress(
+		ASSOCIATED_TOKEN_PROGRAM_ID,
+		TOKEN_PROGRAM_ID,
         DevnetBanks[0].mint, // mint
-        provider.wallet.publicKey,// owner
-    );
+		provider.wallet.publicKey,
+	);
     console.log(`ata: ${ata.toString()}`)
 
     const tx = await clearingHouse.deposit(
@@ -367,22 +393,10 @@ marketCmd.action(async () => {
         console.log("stateAccountUpdate");
         console.log(e);
     } )
+
     clearingHouse.eventEmitter.on("marketAccountUpdate",(m: MarketAccount)=> {
         console.log("marketAccountUpdate");
-        const marketInfo = Markets["devnet"][0];
-        const lastOraclePrice = m?.amm.lastOraclePrice;
-        const baseSpread = m?.amm.baseSpread;
-        const longSpread = m?.amm.longSpread;
-        const shortSpread = m?.amm.shortSpread;
-        const bidTwap = m?.amm.lastBidPriceTwap;
-        const askTwap = m?.amm.lastAskPriceTwap;
-        const oracleTwap = m?.amm.lastOraclePriceTwap;
-        const markTwap = m?.amm.lastMarkPriceTwap;
-        console.log(`ev: [${marketInfo.symbol}], oracle: ${(lastOraclePrice).toString()}, baseSpread: ${baseSpread?.toString()}, longSpread: ${longSpread.toString()}, shortSpready: ${shortSpread.toString()}`);
-        console.log(` .  twap bid:    ${bidTwap.toString()}`);
-        console.log(` .  twap ask:    ${askTwap.toString()}`);
-        console.log(` .  twap oracle: ${oracleTwap.toString()}`);
-        console.log(` .  twap mark:   ${markTwap.toString()}`);
+        printMarketPrices(m);
     } )
     clearingHouse.eventEmitter.on("bankAccountUpdate",(e:any)=> {
         console.log("bankAccountUpdate");
@@ -396,23 +410,8 @@ marketCmd.action(async () => {
 
     setInterval(() => {
         const m = clearingHouse.getMarketAccount(new BN(0));
-        const marketInfo = Markets["devnet"][0];
-        const lastOraclePrice = m?.amm.lastOraclePrice;
-        const baseSpread = m?.amm.baseSpread;
-        const longSpread = m?.amm.longSpread;
-        const shortSpread = m?.amm.shortSpread;
-        console.log(`[${marketInfo.symbol}], oracle: ${(lastOraclePrice).toString()}, baseSpread: ${baseSpread?.toString()}, longSpread: ${longSpread.toString()}, shortSpready: ${shortSpread.toString()}`);
+        printMarketPrices(m!);
 
-        const bidTwap = m?.amm.lastBidPriceTwap;
-        const askTwap = m?.amm.lastAskPriceTwap;
-        const oracleTwap = m?.amm.lastOraclePriceTwap;
-        const markTwap = m?.amm.lastMarkPriceTwap;
-        console.log(` .  twap bid:    ${bidTwap.toString()}`);
-        console.log(` .  twap ask:    ${askTwap.toString()}`);
-        console.log(` .  twap oracle: ${oracleTwap.toString()}`);
-        console.log(` .  twap mark:   ${markTwap.toString()}`);
-
-        // const orderRecord = eventSubscriber.getEventsArray('OrderRecord');
         const orderRecord = eventSubscriber.getEventList('OrderRecord');
         console.log(`orderRecords: ${orderRecord.size}`);
 
@@ -454,6 +453,9 @@ function printOpenPositions(userAcc: UserAccount): UserPosition[] {
     return userAcc.positions;
 }
 
+/*
+ * ts-node cli.ts bulk-place-test
+ */
 
 const bulkPlaceTest = program.command('bulk-place-test');
 bulkPlaceTest.action(async () => {
@@ -503,7 +505,7 @@ bulkPlaceTest.action(async () => {
     printOpenPositions(userAcc);
 
 
-    for (let ii = 0; ii < 100; ii += 1) {
+    for (let ii = 0; ii < 10; ii += 1) {
         let userAcc = clearingHouseUser.getUserAccount();
         console.log(`${ii}: User open orders:`);
         printOpenOrders(userAcc);
