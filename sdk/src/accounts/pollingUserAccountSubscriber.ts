@@ -167,4 +167,8 @@ export class PollingUserAccountSubscriber implements UserAccountSubscriber {
 		this.assertIsSubscribed();
 		return this.user;
 	}
+
+	public decodeUserAccountData(data: Buffer): UserAccount {
+		return this.program.account.user.coder.accounts.decode('User', data);
+	}
 }

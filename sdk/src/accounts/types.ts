@@ -17,6 +17,7 @@ export interface AccountSubscriber<T> {
 	subscribe(onChange: (data: T) => void): Promise<void>;
 	fetch(): Promise<void>;
 	unsubscribe(): Promise<void>;
+	decodeBuffer(buffer: Buffer): T;
 }
 
 export class NotSubscribedError extends Error {
@@ -71,6 +72,7 @@ export interface UserAccountSubscriber {
 	unsubscribe(): Promise<void>;
 
 	getUserAccountAndSlot(): DataAndSlot<UserAccount>;
+	decodeUserAccountData?(data: Buffer): UserAccount;
 }
 
 export interface TokenAccountEvents {

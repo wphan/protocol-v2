@@ -9,8 +9,9 @@ import {
 	Transaction,
 	TransactionSignature,
 	Connection,
+	PublicKey,
 } from '@solana/web3.js';
-import { AnchorProvider } from '@project-serum/anchor';
+import { AnchorProvider, utils } from '@project-serum/anchor';
 import assert from 'assert';
 import bs58 from 'bs58';
 
@@ -240,5 +241,14 @@ export class RetryTxSender implements TxSender {
 		if (!alreadyUsingConnection) {
 			this.additionalConnections.push(newConnection);
 		}
+	}
+
+	async simulate(
+		tx: Transaction,
+		signers?: Array<Signer>,
+		commitment?: Commitment,
+		includeAccounts?: boolean | Array<PublicKey>
+	): Promise<utils.rpc.SuccessfulTxSimulationResponse> {
+		return this.provider.simulate(tx, signers, commitment, includeAccounts);
 	}
 }

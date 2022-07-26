@@ -26,6 +26,7 @@ import {
 	Transaction,
 	TransactionInstruction,
 	AccountMeta,
+	Commitment,
 } from '@solana/web3.js';
 
 import { MockUSDCFaucet } from './mockUSDCFaucet';
@@ -807,6 +808,19 @@ export class ClearingHouse {
 			baseAssetAmount: amount,
 			price: limitPrice,
 		});
+	}
+
+	public async placeOrderSimulate(
+		orderParams: OrderParams,
+		commitment?: Commitment,
+		includeAccounts?: boolean | Array<PublicKey>
+	): Promise<anchor.utils.rpc.SuccessfulTxSimulationResponse> {
+		return await this.txSender.simulate(
+			wrapInTx(await this.getPlaceOrderIx(orderParams)),
+			[],
+			commitment,
+			includeAccounts
+		);
 	}
 
 	public async placeOrder(

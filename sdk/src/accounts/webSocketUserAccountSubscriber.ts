@@ -73,4 +73,8 @@ export class WebSocketUserAccountSubscriber implements UserAccountSubscriber {
 		this.assertIsSubscribed();
 		return this.userDataAccountSubscriber.dataAndSlot;
 	}
+
+	public decodeUserAccountData(data: Buffer): UserAccount {
+		return this.userDataAccountSubscriber.decodeBuffer(data);
+	}
 }
