@@ -1,7 +1,9 @@
-## Installation
+
+## Development
 ```shell
+cd ../sdk &&
+yarn link "@drift-labs/sdk" &&
+cd ../cli-trading &&
 yarn &&
-tsc &&
-npm link &&
-drift config init
+ts-node cli.tst
 ```
